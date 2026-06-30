@@ -16,7 +16,7 @@
 #define I2C_SDA_PIN    4
 #define I2C_SCL_PIN    5
 #define MPU6050_ADDR   0x68
-#define WINDOW_SIZE    50
+#define WINDOW_SIZE    26
 #define N_AXES         3
 
 // nomes das classes
@@ -30,8 +30,8 @@ uint8_t tensor_arena[TENSOR_ARENA_SIZE];
 float window_buffer[WINDOW_SIZE][N_AXES];
 
 // parâmetros do Z-score copiar do Colab após treino
-const float SCALER_MEAN[N_AXES]  = {-0.34582029f, -1.81494667f, 10.17652452f};
-const float SCALER_SCALE[N_AXES] = { 7.15004794f,  6.99656644f,  4.80765432f};
+const float SCALER_MEAN[N_AXES]  = {-0.34533258f, -1.81475892f, 10.17602429f};
+const float SCALER_SCALE[N_AXES] = { 7.15077718f,  6.99651828f,  4.81140055f};
 
 
 // inicializa o MPU6050 
@@ -119,7 +119,6 @@ int main() {
 
     printf("Modelo carregado. Iniciando coleta...\n\n");
 
-    // antes do loop principal
     uint32_t t_start = time_us_32();
 
     for (int i = 0; i < WINDOW_SIZE; i++) {
