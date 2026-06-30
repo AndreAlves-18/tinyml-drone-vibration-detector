@@ -11,7 +11,7 @@
 // modelo
 #include "drone_fault_model.h"
 
-// ── configurações do MPU6050 ──
+// configurações do MPU6050
 #define I2C_PORT       i2c0
 #define I2C_SDA_PIN    4
 #define I2C_SCL_PIN    5
@@ -19,34 +19,31 @@
 #define WINDOW_SIZE    50
 #define N_AXES         3
 
-// ── nomes das classes ──
+// nomes das classes
 const char* CLASS_NAMES[] = {"Normal", "Anomalo_N1", "Anomalo_N2"};
 
-// ── memória para o TFLite Micro ──
+// memória para o TFLite Micro
 constexpr int TENSOR_ARENA_SIZE = 60 * 1024;   // 60 KB
 uint8_t tensor_arena[TENSOR_ARENA_SIZE];
 
-// ── buffer da janela ──
+// buffer da janela
 float window_buffer[WINDOW_SIZE][N_AXES];
 
-// ── parâmetros do Z-score (copiar do Colab após treino) ──
-// scaler.mean_ e scaler.scale_ — um valor por eixo
+// parâmetros do Z-score copiar do Colab após treino
 const float SCALER_MEAN[N_AXES]  = {-0.34582029f, -1.81494667f, 10.17652452f};
 const float SCALER_SCALE[N_AXES] = { 7.15004794f,  6.99656644f,  4.80765432f};
 
 
-// ── inicializa o MPU6050 ──
+// inicializa o MPU6050 
 void mpu6050_init() {
     uint8_t buf[2];
-    // acorda o sensor (sai do modo sleep)
     buf[0] = 0x6B; buf[1] = 0x00;
     i2c_write_blocking(I2C_PORT, MPU6050_ADDR, buf, 2, false);
-    // configura acelerômetro para ±2g
     buf[0] = 0x1C; buf[1] = 0x00;
     i2c_write_blocking(I2C_PORT, MPU6050_ADDR, buf, 2, false);
 }
 
-// ── lê os 3 eixos de aceleração em m/s² ──
+// lê os 3 eixos de aceleração em m/s² 
 void mpu6050_read_accel(float *ax, float *ay, float *az) {
     uint8_t reg = 0x3B;
     uint8_t raw[6];
@@ -63,7 +60,7 @@ void mpu6050_read_accel(float *ax, float *ay, float *az) {
     *az = (az_raw / 16384.0f) * 9.81f;
 }
 
-// ── normaliza uma janela com Z-score ──
+// normaliza uma janela com Z-score 
 void normalize_window(float input[WINDOW_SIZE][N_AXES],
                       float output[WINDOW_SIZE][N_AXES]) {
     for (int t = 0; t < WINDOW_SIZE; t++) {
@@ -80,7 +77,7 @@ int main() {
     sleep_ms(2000);   // aguarda USB estabilizar
     printf("=== Drone Fault Detector ===\n");
 
-    // ── inicializa I2C ──
+    // inicializa I2C
     i2c_init(I2C_PORT, 400 * 1000);   // 400 kHz
     gpio_set_function(I2C_SDA_PIN, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL_PIN, GPIO_FUNC_I2C);
@@ -89,7 +86,7 @@ int main() {
     mpu6050_init();
     printf("MPU6050 inicializado\n");
 
-    // ── carrega o modelo TFLite ──
+    // carrega o modelo TFLite
     const tflite::Model* tfl_model = tflite::GetModel(g_model);
     if (tfl_model->version() != TFLITE_SCHEMA_VERSION) {
         printf("ERRO: versão do modelo incompatível!\n");
@@ -138,10 +135,10 @@ int main() {
     float fs_real = WINDOW_SIZE / ((t_end - t_start) / 1e6f);
     printf("fs real: %.1f Hz\n", fs_real);
 
-    // ── loop principal ──
+    // loop principal
     while (true) {
 
-        // coleta janela de 256 amostras
+        // coleta janela de tamanho  WINDOW_SIZE
         for (int i = 0; i < WINDOW_SIZE; i++) {
             mpu6050_read_accel(
                 &window_buffer[i][0],
@@ -155,7 +152,7 @@ int main() {
         float norm_buffer[WINDOW_SIZE][N_AXES];
         normalize_window(window_buffer, norm_buffer);
 
-        // copia para o tensor de entrada
+        // copia para o modelo
         float* input_data = input->data.f;
         for (int t = 0; t < WINDOW_SIZE; t++) {
             for (int c = 0; c < N_AXES; c++) {
