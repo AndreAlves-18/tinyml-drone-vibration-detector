@@ -102,4 +102,4 @@ O modelo foi treinado com um dataset próprio, coletado em bancada com o aceler�
 ## Autor
 
 André Alves de Freitas — Engenharia de Computação, UFC Campus Quixadá  
-Orientador: Jeandro de Mesquita Bezerra
+Professor: Jeandro de Mesquita Bezerra
