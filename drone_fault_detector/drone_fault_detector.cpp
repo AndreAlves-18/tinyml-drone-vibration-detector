@@ -119,6 +119,7 @@ int main() {
 
     printf("Modelo carregado. Iniciando coleta...\n\n");
 
+    // Mostra a frequêcia real
     uint32_t t_start = time_us_32();
 
     for (int i = 0; i < WINDOW_SIZE; i++) {
