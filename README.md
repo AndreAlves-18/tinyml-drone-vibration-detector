@@ -18,16 +18,86 @@ Este projeto foi desenvolvido como parte do TCC e da disciplina de Aprendizado d
 
 ```
 .
-├── colab/
-│   └── treinamento_modelo.ipynb       # notebook com todo o pipeline de ML
-├── firmware/
-│   ├── drone_fault_detector.cpp       # código principal do firmware
-│   ├── drone_fault_model.cc           # modelo convertido em array C
-│   ├── drone_fault_model.h            # header do modelo
-│   ├── CMakeLists.txt                 # configuração de build
-│   └── pico_sdk_import.cmake
+├── dataset/                                                          # arquivos .xlsx com os sinais de vibração
+├── notebook/                                                         # notebook com todo o pipeline de ML
+├── model/                                                            # modelo treinado (.keras, .tflite)
+├── drone_fault_detector/                                             # projeto do firmware (Pico SDK)
+│   ├── drone_fault_detector.cpp                                      # código principal do firmware
+│   ├── drone_fault_model.cc                                          # modelo convertido em array C
+│   ├── drone_fault_model.h                                           # header do modelo
+│   ├── CMakeLists.txt                                                # configuração de build
+│   ├── pico_sdk_import.cmake
+│   └── pico-tflmicro/                                                # biblioteca TensorFlow Lite Micro
+├── Detecção_de_Falhas_em_Motores_de_Drone_com_Base_em_Sinais_de_Vibração_Utilizando_TinyML.pdf   # artigo
+├── SLIDE_Entregável 3 - Final.pdf                                    # slides de apresentação
 └── README.md
 ```
+
+## Instalação
+
+### Pré-requisitos
+
+- Python 3.12+ (ou conta no Google Colab, sem necessidade de instalação local)
+- [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) configurado
+- CMake e Ninja
+- VS Code com a extensão oficial do Raspberry Pi Pico (recomendado)
+- Git
+
+### Clonando o repositório
+
+```bash
+git clone https://github.com/<seu-usuario>/drone-fault-detection-tinyml.git
+cd drone-fault-detection-tinyml
+```
+
+### Clonando a dependência do firmware
+
+Dentro da pasta `drone_fault_detector/`, clone a biblioteca TFLite Micro:
+
+```bash
+cd drone_fault_detector
+git clone https://github.com/raspberrypi/pico-tflmicro.git
+```
+
+## Como rodar o notebook
+
+1. Abra o notebook localizado em `notebook/` no [Google Colab](https://colab.research.google.com/)
+2. Faça o upload dos três arquivos `.xlsx` da pasta `dataset/` (Normal, Anômalo N1, Anômalo N2) para o ambiente do Colab
+3. Atualize as variáveis `PATH_NORMAL`, `PATH_ANOMALO_N1` e `PATH_ANOMALO_N2` na seção de configuração com os caminhos dos arquivos enviados
+4. Execute as células na ordem, de cima para baixo
+5. Ao final, o notebook gera o modelo treinado (salvo em `model/`) e os arquivos `drone_fault_model.cc` / `.tflite` quantizado, prontos para uso no firmware
+
+## Como gravar no Raspberry Pi Pico W
+
+1. Copie os arquivos `drone_fault_model.cc` e `drone_fault_model.h` gerados pelo notebook para a pasta `drone_fault_detector/`
+2. Compile o projeto:
+
+```bash
+cd drone_fault_detector
+mkdir build
+cd build
+cmake ..
+ninja
+```
+
+3. Conecte o Pico ao computador segurando o botão **BOOTSEL**. Ele será reconhecido como um dispositivo de armazenamento (`RPI-RP2`)
+4. Copie o arquivo `.uf2` gerado para o Pico:
+
+```bash
+cp drone_fault_detector.uf2 /media/$USER/RPI-RP2/
+```
+
+5. O Pico reinicia automaticamente e começa a executar o firmware
+6. Para visualizar os resultados da inferência em tempo real, conecte-se à porta serial USB (baud rate 115200):
+
+```bash
+minicom -b 115200 -o -D /dev/ttyACM0
+```
+
+## Documentação
+
+- **Artigo:** [`Detecção_de_Falhas_em_Motores_de_Drone_com_Base_em_Sinais_de_Vibração_Utilizando_TinyML.pdf`](./Detecção_de_Falhas_em_Motores_de_Drone_com_Base_em_Sinais_de_Vibração_Utilizando_TinyML.pdf) — documento completo do projeto, com fundamentação teórica, metodologia, implementação e resultados
+- **Slides:** [`SLIDE_Entregável 3 - Final.pdf`](<./SLIDE_Entregável 3 - Final.pdf>) — apresentação resumida do projeto
 
 ## Pipeline de Machine Learning (Colab)
 
@@ -52,7 +122,7 @@ O notebook cobre as seguintes etapas:
 
 ## Firmware embarcado (Raspberry Pi Pico W)
 
-O firmware foi desenvolvido em C/C++ utilizando o Raspberry Pi Pico SDK e a biblioteca [pico-tflmicro](https://github.com/raspberrypi/pico-tflmicro), responsável por executar a inferência do modelo TFLite diretamente no microcontrolador.
+O firmware está na pasta `drone_fault_detector/` e foi desenvolvido em C/C++ utilizando o Raspberry Pi Pico SDK e a biblioteca [pico-tflmicro](https://github.com/raspberrypi/pico-tflmicro), responsável por executar a inferência do modelo TFLite diretamente no microcontrolador.
 
 ### Funcionamento
 
@@ -67,29 +137,6 @@ O firmware foi desenvolvido em C/C++ utilizando o Raspberry Pi Pico SDK e a bibl
 - Raspberry Pi Pico W (RP2040)
 - Acelerômetro MPU6050 (comunicação I2C)
 
-### Build do projeto
-
-O projeto utiliza CMake e Ninja para compilação:
-
-```bash
-mkdir build
-cd build
-cmake ..
-ninja
-```
-
-Após a compilação, grave o arquivo `.uf2` gerado no Pico (modo BOOTSEL):
-
-```bash
-cp drone_fault_detector.uf2 /media/$USER/RPI-RP2/
-```
-
-Para visualizar os resultados da inferência em tempo real, conecte-se à porta serial USB do Pico (baud rate 115200), por exemplo via `minicom`:
-
-```bash
-minicom -b 115200 -o -D /dev/ttyACM0
-```
-
 ### Dependências
 
 - [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk)
@@ -102,4 +149,4 @@ O modelo foi treinado com um dataset próprio, coletado em bancada com o aceler�
 ## Autor
 
 André Alves de Freitas — Engenharia de Computação, UFC Campus Quixadá  
-Professor: Jeandro de Mesquita Bezerra
+Orientador: Jeandro de Mesquita Bezerra
